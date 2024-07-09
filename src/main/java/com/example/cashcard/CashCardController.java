@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
-@RequestMapping("/cashcard")
+@RequestMapping("/cashcards")
 public class CashCardController {
 
     CashCardRepository cashCardRepository;
@@ -34,15 +34,18 @@ public class CashCardController {
         return optionalCashCard.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @GetMapping
+    @GetMapping()
     private ResponseEntity<List<CashCard>> findAll(Pageable pageable) {
-        Page<CashCard> page = ResponseEntity.ok(cashCardRepository.findAll(
+
+        Page<CashCard> page = cashCardRepository.findAll(
                 PageRequest.of(
                         pageable.getPageNumber(),
-                        pageable.getPageSize(),
-                        pageable.getSortOr(Sort.by(Sort.Direction.DESC, "amount")))));
+                        pageable.getPageSize() //,
+                        //pageable.getSortOr(Sort.by(Sort.Direction.DESC, "amount"))
+                        ));
 
         return ResponseEntity.ok(page.getContent());
+
     }
 
     @PostMapping
@@ -50,7 +53,7 @@ public class CashCardController {
         CashCard savedCashCard = cashCardRepository.save(newCasCardRequest);
 
         URI locationOfNewCashCard = ucb
-                .path("cashcard/{id}")
+                .path("cashcards/{id}")
                 .buildAndExpand(savedCashCard.id())
                 .toUri();
 
