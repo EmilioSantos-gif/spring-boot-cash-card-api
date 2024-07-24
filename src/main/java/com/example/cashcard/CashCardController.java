@@ -9,6 +9,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,17 +28,17 @@ public class CashCardController {
         this.cashCardRepository = cashCardRepository;
     }
 
-    @GetMapping("{requestedId}")
-    ResponseEntity<CashCard> getCashCardById(@PathVariable Long requestedId) {
-        Optional<CashCard> optionalCashCard = cashCardRepository.findById(requestedId);
+    @GetMapping("/{requestedId}")
+    ResponseEntity<CashCard> getCashCardById(@PathVariable Long requestedId, Principal principal) {
+        Optional<CashCard> optionalCashCard = Optional.ofNullable(cashCardRepository.findByIdAndOwner(requestedId, principal.getName()));
 
         return optionalCashCard.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping()
-    private ResponseEntity<List<CashCard>> findAll(Pageable pageable) {
+    private ResponseEntity<List<CashCard>> findAll(Pageable pageable, Principal principal) {
 
-        Page<CashCard> page = cashCardRepository.findAll(
+        Page<CashCard> page = cashCardRepository.findByOwner(principal.getName(),
                 PageRequest.of(
                         pageable.getPageNumber(),
                         pageable.getPageSize(),
@@ -49,8 +50,10 @@ public class CashCardController {
     }
 
     @PostMapping
-    ResponseEntity<Void> createCashCard(@RequestBody CashCard newCasCardRequest, UriComponentsBuilder ucb){
-        CashCard savedCashCard = cashCardRepository.save(newCasCardRequest);
+    ResponseEntity<Void> createCashCard(@RequestBody CashCard newCasCardRequest, UriComponentsBuilder ucb, Principal principal){
+        CashCard cashCardWithOwner = new CashCard(null, newCasCardRequest.amount(), principal.getName());
+
+        CashCard savedCashCard = cashCardRepository.save(cashCardWithOwner);
 
         URI locationOfNewCashCard = ucb
                 .path("cashcards/{id}")
