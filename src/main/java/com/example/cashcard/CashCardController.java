@@ -1,7 +1,5 @@
 package com.example.cashcard;
 
-import org.apache.coyote.Response;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,10 +27,13 @@ public class CashCardController {
     }
 
     @GetMapping("/{requestedId}")
-    ResponseEntity<CashCard> getCashCardById(@PathVariable Long requestedId, Principal principal) {
-        Optional<CashCard> optionalCashCard = Optional.ofNullable(cashCardRepository.findByIdAndOwner(requestedId, principal.getName()));
+    ResponseEntity<CashCard> findById(@PathVariable Long requestedId, Principal principal) {
+        CashCard cashCard = findCashCard(requestedId, principal);
 
-        return optionalCashCard.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        if (null != cashCard) {
+            return ResponseEntity.ok(cashCard);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @GetMapping()
@@ -62,4 +63,23 @@ public class CashCardController {
 
         return ResponseEntity.created(locationOfNewCashCard).build();
     }
+
+
+    @PutMapping("/{requestedId}")
+    ResponseEntity<Void> putCashCard(@PathVariable Long requestedId, @RequestBody CashCard updateCashcard, Principal principal) {
+        CashCard cashCard = findCashCard(requestedId, principal);
+
+        if (null != cashCard) {
+            CashCard updatedCashcard = new CashCard(cashCard.id(), updateCashcard.amount(), principal.getName());
+            cashCardRepository.save(updatedCashcard);
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.notFound().build();
+    }
+
+    private CashCard findCashCard(Long requestedId, Principal principal) {
+        return cashCardRepository.findByIdAndOwner(requestedId, principal.getName());
+    }
+
 }
