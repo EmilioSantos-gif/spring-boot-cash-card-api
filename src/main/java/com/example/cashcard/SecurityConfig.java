@@ -48,10 +48,10 @@ class SecurityConfig {
 
         UserDetails kumar = users
                 .username("kumar2")
-                .password("xyz879")
+                .password(passwordEncoder.encode("xyz789"))
                 .roles("CARD-OWNER")
                 .build();
 
-        return new InMemoryUserDetailsManager(sarah, handOwnsNoCards);
+        return new InMemoryUserDetailsManager(sarah, handOwnsNoCards, kumar);
     }
 }
